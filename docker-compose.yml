@@ -1,0 +1,57 @@
+version: '3'
+services:
+    nginx:
+        build:
+            context: ./
+            dockerfile: docker/nginx.docker
+        volumes:
+            - ./:/var/www
+        ports:
+            - "8080:80"
+        depends_on:
+            - php-fpm
+
+    php-fpm:
+        build:
+            context: ./
+            dockerfile: docker/php-fpm.docker
+        volumes:
+            - ./:/var/www
+        depends_on:
+            - postgresql
+        environment:
+            - "DB_PORT=5432"
+            - "DB_HOST=postgresql"
+            - "REDIS_PORT=6379"
+            - "REDIS_HOST=redis"
+
+    php-cli:
+        build:
+            context: ./
+            dockerfile: docker/php-cli.docker
+        volumes:
+          - ./:/var/www
+        depends_on:
+          - postgresql
+        environment:
+          - "DB_PORT=5432"
+          - "DB_HOST=postgresql"
+          - "REDIS_PORT=6379"
+          - "REDIS_HOST=redis"
+        tty: true
+
+    postgresql:
+      image: postgres:alpine
+      volumes:
+        - postgresql:/var/lib/postgresql/data
+        - ./docker/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      ports:
+        - "5432:5432"
+      environment:
+        - POSTGRES_DB=app
+        - POSTGRES_USER=default
+        - POSTGRES_PASSWORD=secret
+
+volumes:
+  postgresql:
+    driver: local

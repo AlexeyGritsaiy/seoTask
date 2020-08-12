@@ -1,0 +1,30 @@
+FROM php:7.3-cli
+
+RUN apt-get update && apt-get install -y libmcrypt-dev \
+    libpq-dev libzip-dev \
+    && docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
+    && docker-php-ext-install pdo_pgsql zip pcntl
+
+RUN apt-get update -y && apt-get install -y sendmail libpng-dev
+
+# Create folders if not exists (https://github.com/tianon/docker-brew-debian/issues/65)
+RUN mkdir -p /usr/share/man/man1 && \
+    mkdir -p /usr/share/man/man7 && \
+    # Install the pgsql client
+    apt-get install -y postgresql-client && \
+    apt-get install -y postgis
+
+RUN apt-get update && \
+    apt-get install -y \
+        zlib1g-dev
+
+RUN docker-php-ext-install mbstring
+RUN docker-php-ext-install gd
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/bin --filename=composer --quiet
+
+ENV COMPOSER_ALLOW_SUPERUSER 1
+
+RUN chown -R www-data:www-data /var/www
+
+WORKDIR /var/www
